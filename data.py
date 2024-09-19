@@ -1,44 +1,82 @@
 import mysql.connector
-conn = mysql.connector.connect(user='root', password='', host='localhost',database='Ecole')
-cursor = conn.cursor()
 
-def insert_eleve():
-    cursor.execute("INSERT INTO eleves (nom, prenom, age, numero_classe) VALUES ('Doe', 'John', 25, 1)")
-    conn.commit()
+try:
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='Ecole')
+    cursor = conn.cursor()
 
-def jointure():
-    cursor.execute("SELECT * FROM eleves join enseignants on eleves.numero_classe = enseignants.numero_classe")
-    data = cursor.fetchall()
-    for row in data:
-        print(row)
+    def insert_eleve():
+        try:
+            cursor.execute("INSERT INTO eleves (nom, prenom, age, numero_classe) VALUES ('Doe', 'John', 25, 1)")
+            conn.commit()
+        except Exception as e:
+            print(f"Erreur lors de l'insertion : {e}")
 
-def select_eleve():
-    cursor.execute("SELECT * FROM eleves")
-    data = cursor.fetchall()
-    for row in data:
-        print(row)
+    def jointure():
+        try:
+            cursor.execute("""
+                SELECT * FROM eleves 
+                JOIN enseignants 
+                ON eleves.numero_classe = enseignants.numero_classe
+            """)
+            data = cursor.fetchall()
+            for row in data:
+                print(row)
+        except Exception as e:
+            print(f"Erreur lors de la jointure : {e}")
 
-def compteeleve():
-    cursor.execute("SELECT enseignants.nom, count(*) FROM eleves join enseignants on eleves.numero_classe = enseignants.numero_classe group by enseignants.nom")
-    data = cursor.fetchall()
-    for row in data:
-        print(row)
-eleveduprof1 = []
+    def select_eleve():
+        try:
+            cursor.execute("SELECT * FROM eleves")
+            data = cursor.fetchall()
+            for row in data:
+                print(row)
+        except Exception as e:
+            print(f"Erreur lors de la sélection des élèves : {e}")
 
-def eleveduprof():
-    cursor.execute("SELECT eleves.prenom, eleves.nom FROM eleves join enseignants on eleves.numero_classe = enseignants.numero_classe where enseignants.nom = 'Salk'")
-    data = cursor.fetchall()
-    for row in data:
-        eleveduprof1.append(row)
-        print(row)
-    return eleveduprof1
+    def compteeleve():
+        try:
+            cursor.execute("""
+                SELECT enseignants.nom, count(*) 
+                FROM eleves 
+                JOIN enseignants 
+                ON eleves.numero_classe = enseignants.numero_classe 
+                GROUP BY enseignants.nom
+            """)
+            data = cursor.fetchall()
+            for row in data:
+                print(f"Enseignant: {row[0]}, Nombre d'élèves : {row[1]}")
+        except Exception as e:
+            print(f"Erreur lors du comptage : {e}")
 
+    def eleveduprof():
+        try:
+            cursor.execute("""
+                SELECT eleves.prenom, eleves.nom 
+                FROM eleves 
+                JOIN enseignants 
+                ON eleves.numero_classe = enseignants.numero_classe 
+                WHERE enseignants.nom = 'Salk'
+            """)
+            data = cursor.fetchall()
+            eleveduprof1 = [row for row in data]
+            for row in eleveduprof1:
+                print(f"Élève : {row[0]} {row[1]}")
+            return eleveduprof1
+        except Exception as e:
+            print(f"Erreur lors de la récupération des élèves du professeur : {e}")
+            return []
 
+    insert_eleve()
+    jointure()
+    select_eleve()
+    compteeleve()
+    eleveduprof()
 
-for i in eleveduprof():
-    print(i)
+except mysql.connector.Error as err:
+    print(f"Erreur de connexion à la base de données : {err}")
 
-
-cursor.close()
-conn.close()
-
+finally:
+    if conn.is_connected():
+        cursor.close()
+        conn.close()
+        print("Connexion à la base de données fermée.")
